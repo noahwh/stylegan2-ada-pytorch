@@ -120,13 +120,13 @@ def convert_tf_generator(tf_G):
 
     # Convert kwargs.
     kwargs = dnnlib.EasyDict(
-        z_dim                   = kwarg('latent_size',          512),
+        z_dim                   = kwarg('latent_size',          1024),
         c_dim                   = kwarg('label_size',           0),
-        w_dim                   = kwarg('dlatent_size',         512),
+        w_dim                   = kwarg('dlatent_size',         1024),
         img_resolution          = kwarg('resolution',           1024),
         img_channels            = kwarg('num_channels',         3),
         mapping_kwargs = dnnlib.EasyDict(
-            num_layers          = kwarg('mapping_layers',       8),
+            num_layers          = kwarg('mapping_layers',       4),
             embed_features      = kwarg('label_fmaps',          None),
             layer_features      = kwarg('mapping_fmaps',        None),
             activation          = kwarg('mapping_nonlinearity', 'lrelu'),
@@ -134,8 +134,8 @@ def convert_tf_generator(tf_G):
             w_avg_beta          = kwarg('w_avg_beta',           0.995,  none=1),
         ),
         synthesis_kwargs = dnnlib.EasyDict(
-            channel_base        = kwarg('fmap_base',            16384) * 2,
-            channel_max         = kwarg('fmap_max',             512),
+            channel_base        = kwarg('fmap_base',            32768) * 2,
+            channel_max         = kwarg('fmap_max',             1024),
             num_fp16_res        = kwarg('num_fp16_res',         0),
             conv_clamp          = kwarg('conv_clamp',           None),
             architecture        = kwarg('architecture',         'skip'),
@@ -150,6 +150,8 @@ def convert_tf_generator(tf_G):
     kwarg('truncation_cutoff')
     kwarg('style_mixing_prob')
     kwarg('structure')
+    kwarg('resolution_h')
+    kwarg('resolution_w')
     unknown_kwargs = list(set(tf_kwargs.keys()) - known_kwargs)
     if len(unknown_kwargs) > 0:
         raise ValueError('Unknown TensorFlow kwarg', unknown_kwargs[0])
@@ -239,14 +241,16 @@ def convert_tf_discriminator(tf_D):
             lr_multiplier       = kwarg('mapping_lrmul',        0.1),
         ),
         epilogue_kwargs = dnnlib.EasyDict(
-            mbstd_group_size    = kwarg('mbstd_group_size',     None),
-            mbstd_num_channels  = kwarg('mbstd_num_features',   1),
+            mbstd_group_size    = kwarg('mbstd_group_size',     32),
+            mbstd_num_channels  = kwarg('mbstd_num_features',   4),
             activation          = kwarg('nonlinearity',         'lrelu'),
         ),
     )
 
     # Check for unknown kwargs.
     kwarg('structure')
+    kwarg('resolution_h')
+    kwarg('resolution_w')
     unknown_kwargs = list(set(tf_kwargs.keys()) - known_kwargs)
     if len(unknown_kwargs) > 0:
         raise ValueError('Unknown TensorFlow kwarg', unknown_kwargs[0])
