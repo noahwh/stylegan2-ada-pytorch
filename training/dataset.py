@@ -154,11 +154,12 @@ class Dataset(torch.utils.data.Dataset):
 class ImageFolderDataset(Dataset):
     def __init__(self,
         path,                   # Path to directory or zip.
-        resolution      = None, # Ensure specific resolution, None = highest available.
+        resolution      = 512, # Ensure specific resolution, None = highest available.
         **super_kwargs,         # Additional arguments for the Dataset base class.
     ):
         self._path = path
         self._zipfile = None
+        self._resolution = resolution
 
         if os.path.isdir(self._path):
             self._type = 'dir'
@@ -176,8 +177,9 @@ class ImageFolderDataset(Dataset):
 
         name = os.path.splitext(os.path.basename(self._path))[0]
         raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0).shape)
-        if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
-            raise IOError('Image files do not match the specified resolution')
+        #We're going to crop to the resolution we want.
+        #if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
+            #raise IOError('Image files do not match the specified resolution')
         super().__init__(name=name, raw_shape=raw_shape, **super_kwargs)
 
     @staticmethod
@@ -214,6 +216,11 @@ class ImageFolderDataset(Dataset):
                 image = pyspng.load(f.read())
             else:
                 image = np.array(PIL.Image.open(f))
+                crop = np.min(image.shape[:2])
+                image = image[(image.shape[0] - crop) // 2 : (image.shape[0] + crop) // 2, (image.shape[1] - crop) // 2 : (image.shape[1] + crop) // 2]
+                image = PIL.Image.fromarray(image, 'RGB')
+                image = image.resize((self._resolution, self._resolution), PIL.Image.BOX)
+                image = np.array(image)
         if image.ndim == 2:
             image = image[:, :, np.newaxis] # HW => HWC
         image = image.transpose(2, 0, 1) # HWC => CHW
